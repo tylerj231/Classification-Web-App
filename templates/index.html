@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat/Dog Classifier</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.2/axios.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .upload-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .preview {
+            margin: 20px auto;
+            max-width: 300px;
+            display: none;
+        }
+        .preview img {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .result {
+            text-align: center;
+            margin-top: 20px;
+            padding: 1rem;
+            border-radius: 8px;
+            display: none;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .upload-label {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        .upload-label:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cat/Dog Image Classifier</h1>
+
+        <div class="upload-section">
+            <label class="upload-label" for="imageInput">
+                Choose Image
+            </label>
+            <input type="file" id="imageInput" accept="image/*">
+            <br>
+            <button id="predictBtn" disabled>Predict</button>
+        </div>
+
+        <div class="preview">
+            <img id="imagePreview" src="" alt="Image preview">
+        </div>
+
+        <div class="loading">
+            Analyzing image...
+        </div>
+
+        <div class="result">
+            <h2>Prediction Result</h2>
+            <p>This image is a <span id="predictionLabel"></span> with <span id="predictionProb"></span>% confidence.</p>
+        </div>
+    </div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewContainer = document.querySelector('.preview');
+        const predictBtn = document.getElementById('predictBtn');
+        const loadingDiv = document.querySelector('.loading');
+        const resultDiv = document.querySelector('.result');
+        const predictionLabel = document.getElementById('predictionLabel');
+        const predictionProb = document.getElementById('predictionProb');
+
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                    predictBtn.disabled = false;
+                }
+                reader.readAsDataURL(file);
+                resultDiv.style.display = 'none';
+            }
+        });
+
+        predictBtn.addEventListener('click', async function() {
+            const file = imageInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            predictBtn.disabled = true;
+            loadingDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+
+            try {
+                const response = await axios.post('/classify', formData);
+                predictionLabel.textContent = response.data.label;
+                predictionProb.textContent = response.data.probability;
+                resultDiv.style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error analyzing image. Please try again.');
+            } finally {
+                loadingDiv.style.display = 'none';
+                predictBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
